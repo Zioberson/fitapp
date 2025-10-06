@@ -1,28 +1,80 @@
-import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet, TextInput, ScrollView } from 'react-native';
-
-// Mock data
-const mockWorkoutPlan = {
-  name: 'Trening FBW A',
-  date: '2025-10-05',
-  exercises: [
-    { id: '1', name: 'Przysiady ze sztangą', sets: '3', reps: '10' },
-    { id: '2', name: 'Wyciskanie na ławce', sets: '3', reps: '8' },
-    { id: '3', name: 'Wiosłowanie sztangą', sets: '3', reps: '8' },
-  ],
-};
+import React, { useState, useEffect } from 'react';
+import { View, Text, Button, StyleSheet, TextInput, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { getActiveClientPlanAssignment, getPlanDetails, addMeasurement } from '../services/firestoreService';
 
 const ClientDashboard = ({ user }) => {
+  const [workoutPlan, setWorkoutPlan] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   const [weight, setWeight] = useState('');
   const [waist, setWaist] = useState('');
   const [biceps, setBiceps] = useState('');
 
-  const handleSaveMeasurements = () => {
-    alert(`Zapisano pomiary:\nWaga: ${weight} kg\nTalia: ${waist} cm\nBiceps: ${biceps} cm`);
-    // Clear fields
-    setWeight('');
-    setWaist('');
-    setBiceps('');
+  useEffect(() => {
+    const fetchWorkoutPlan = async () => {
+      try {
+        setLoading(true);
+        const planAssignment = await getActiveClientPlanAssignment(user.uid);
+        if (planAssignment && planAssignment.planId) {
+          const planDetails = await getPlanDetails(planAssignment.planId);
+          setWorkoutPlan(planDetails);
+        }
+      } catch (error) {
+        Alert.alert("Błąd", "Nie udało się pobrać planu treningowego.");
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWorkoutPlan();
+  }, [user.uid]);
+
+  const handleSaveMeasurements = async () => {
+    if (!weight && !waist && !biceps) {
+        Alert.alert("Błąd", "Wprowadź co najmniej jeden pomiar.");
+        return;
+    }
+    try {
+        const measurementData = {
+            weight: parseFloat(weight) || null,
+            waist: parseFloat(waist) || null,
+            biceps: parseFloat(biceps) || null,
+        };
+        await addMeasurement(user.uid, measurementData);
+        Alert.alert("Sukces!", "Twoje pomiary zostały zapisane.");
+        // Clear fields
+        setWeight('');
+        setWaist('');
+        setBiceps('');
+    } catch (error) {
+        Alert.alert("Błąd", "Nie udało się zapisać pomiarów.");
+        console.error(error);
+    }
+  };
+
+  const renderWorkoutPlan = () => {
+    if (loading) {
+      return <ActivityIndicator size="large" color="#22C55E" />;
+    }
+    if (!workoutPlan) {
+      return <Text style={styles.emptyListText}>Nie masz jeszcze przypisanego aktywnego planu.</Text>;
+    }
+    // TODO: Implement a more robust logic to determine the current training day
+    // based on the plan's start date and the current date.
+    // For now, this is a simplified display showing the first day of the plan.
+    const todayWorkout = workoutPlan.weeks?.[0]?.days?.[0];
+
+    return (
+      <>
+        <Text style={styles.planName}>{workoutPlan.name}</Text>
+        {todayWorkout?.exercises?.map((ex, index) => (
+          <Text key={index} style={styles.exerciseItem}>
+            - {ex.name} ({ex.series} serie po {ex.reps} powtórzeń)
+          </Text>
+        )) || <Text>Brak ćwiczeń w planie.</Text>}
+      </>
+    );
   };
 
   return (
@@ -32,12 +84,7 @@ const ClientDashboard = ({ user }) => {
 
       <View style={styles.section}>
         <Text style={styles.subHeader}>Twój dzisiejszy trening:</Text>
-        <Text style={styles.planName}>{mockWorkoutPlan.name}</Text>
-        {mockWorkoutPlan.exercises.map(ex => (
-          <Text key={ex.id} style={styles.exerciseItem}>
-            - {ex.name} ({ex.sets} serie po {ex.reps} powtórzeń)
-          </Text>
-        ))}
+        {renderWorkoutPlan()}
       </View>
 
       <View style={styles.section}>
@@ -108,6 +155,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 10,
     borderRadius: 5,
+  },
+  emptyListText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: 'gray',
   },
 });
 
