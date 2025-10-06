@@ -1,43 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { NavigationContainer } from '@react-navigation/native';
+import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './src/firebaseConfig';
 import { getUserDocument } from './src/services/firestoreService';
-import AuthScreen from './src/screens/AuthScreen';
-import Dashboard from './src/screens/Dashboard';
+import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // onAuthStateChanged returns an unsubscriber
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
-        // User is signed in, get their profile from Firestore
         const userProfile = await getUserDocument(authUser.uid);
         setUser(userProfile);
       } else {
-        // User is signed out
         setUser(null);
       }
-      setLoading(false);
+      // Add a small delay to prevent screen flashing on startup
+      setTimeout(() => setLoading(false), 500);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Error signing out: ", error);
-    }
-  };
-
   if (loading) {
-    // Show a loading indicator while we check for an active session
     return (
       <View style={styles.loaderContainer}>
         <ActivityIndicator size="large" color="#22C55E" />
@@ -46,24 +34,17 @@ export default function App() {
   }
 
   return (
-    <View style={styles.container}>
-      {user ? (
-        <Dashboard user={user} onLogout={handleLogout} />
-      ) : (
-        <AuthScreen />
-      )}
-    </View>
+    <NavigationContainer>
+      <AppNavigator user={user} />
+    </NavigationContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#fff',
   }
 });

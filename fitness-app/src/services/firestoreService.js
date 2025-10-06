@@ -1,5 +1,5 @@
 import { db } from '../firebaseConfig';
-import { collection, doc, setDoc, getDoc, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, addDoc, query, where, getDocs, writeBatch } from 'firebase/firestore';
 
 // --- User Management ---
 
@@ -86,6 +86,57 @@ export const getPlanDetails = async (planId) => {
     const docSnap = await getDoc(planRef);
     return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
 };
+
+/**
+ * Retrieves all training plans created by a specific trainer.
+ * @param {string} trainerId - The trainer's UID.
+ * @returns {Array} A list of training plan objects.
+ */
+export const getTrainerPlans = async (trainerId) => {
+    const q = query(collection(db, 'trainingPlans'), where('trainerId', '==', trainerId));
+    const querySnapshot = await getDocs(q);
+    const plans = [];
+    querySnapshot.forEach((doc) => {
+        plans.push({ id: doc.id, ...doc.data() });
+    });
+    return plans;
+};
+
+/**
+ * Assigns a training plan to a client, deactivating any previously active plans.
+ * @param {string} trainerId - The trainer's UID.
+ * @param {string} clientId - The client's UID.
+ * @param {string} planId - The ID of the plan to assign.
+ */
+export const assignPlanToClient = async (trainerId, clientId, planId) => {
+  const batch = writeBatch(db);
+
+  // 1. Find and deactivate any currently active plans for this client
+  const activePlansQuery = query(
+    collection(db, 'assignedPlans'),
+    where('clientId', '==', clientId),
+    where('isActive', '==', true)
+  );
+  const activePlansSnapshot = await getDocs(activePlansQuery);
+  activePlansSnapshot.forEach((document) => {
+    const docRef = doc(db, 'assignedPlans', document.id);
+    batch.update(docRef, { isActive: false });
+  });
+
+  // 2. Create the new active plan assignment
+  const newAssignmentRef = doc(collection(db, 'assignedPlans'));
+  batch.set(newAssignmentRef, {
+    trainerId,
+    clientId,
+    planId,
+    isActive: true,
+    startDate: new Date(),
+  });
+
+  // 3. Commit the batch
+  await batch.commit();
+};
+
 
 // --- Measurement Management ---
 

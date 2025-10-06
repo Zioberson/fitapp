@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet, TextInput, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { getActiveClientPlanAssignment, getPlanDetails, addMeasurement } from '../services/firestoreService';
 
 const ClientDashboard = ({ user }) => {
+  const navigation = useNavigation();
   const [workoutPlan, setWorkoutPlan] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -73,6 +75,14 @@ const ClientDashboard = ({ user }) => {
             - {ex.name} ({ex.series} serie po {ex.reps} powtórzeń)
           </Text>
         )) || <Text>Brak ćwiczeń w planie.</Text>}
+
+        <View style={{ marginTop: 15 }}>
+            <Button
+                title="Zobacz cały plan"
+                onPress={() => navigation.navigate('FullPlanView', { workoutPlan })}
+                color="#3B82F6"
+            />
+        </View>
       </>
     );
   };

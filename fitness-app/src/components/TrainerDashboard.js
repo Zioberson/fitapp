@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity, Clipboard } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { getTrainerClients } from '../services/firestoreService';
 
 const TrainerDashboard = ({ user }) => {
+  const navigation = useNavigation();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,12 +49,24 @@ const TrainerDashboard = ({ user }) => {
         <FlatList
           data={clients}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <Text style={styles.clientItem}>{item.email}</Text>}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.clientItem}
+              onPress={() => navigation.navigate('ClientProfile', { client: item })}
+            >
+              <Text style={styles.clientItemText}>{item.email}</Text>
+            </TouchableOpacity>
+          )}
           ListEmptyComponent={<Text style={styles.emptyListText}>Nie masz jeszcze żadnych podopiecznych.</Text>}
         />
       )}
 
-      <Button title="Stwórz nowy plan treningowy" onPress={() => alert('Funkcjonalność w budowie!')} />
+      <View style={styles.buttonContainer}>
+        <Button
+          title="Zarządzaj Planami Treningowymi"
+          onPress={() => navigation.navigate('PlanLibrary')}
+        />
+      </View>
     </View>
   );
 };
@@ -96,16 +110,22 @@ const styles = StyleSheet.create({
   },
   clientItem: {
     padding: 15,
-    fontSize: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+  },
+  clientItemText: {
+    fontSize: 16,
   },
   emptyListText: {
     textAlign: 'center',
     marginTop: 20,
     color: 'gray',
   },
+  buttonContainer: {
+    marginTop: 'auto', // Pushes the button to the bottom
+    paddingTop: 10,
+  }
 });
 
 export default TrainerDashboard;
