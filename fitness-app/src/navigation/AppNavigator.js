@@ -10,6 +10,9 @@ import FullPlanViewScreen from '../screens/FullPlanViewScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AddMeasurementScreen from '../screens/AddMeasurementScreen';
 import ProgressHubScreen from '../screens/ProgressHubScreen';
+import MealPlanBuilderScreen from '../screens/MealPlanBuilderScreen';
+import MealPlanLibraryScreen from '../screens/MealPlanLibraryScreen';
+import ClientMealPlanViewScreen from '../screens/ClientMealPlanViewScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +32,9 @@ const AppStack = () => {
       <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Ustawienia' }} />
       <Stack.Screen name="AddMeasurement" component={AddMeasurementScreen} options={{ title: 'Dodaj Pomiar' }} />
       <Stack.Screen name="ProgressHub" component={ProgressHubScreen} options={{ title: 'Centrum Postępów' }} />
+      <Stack.Screen name="MealPlanBuilder" component={MealPlanBuilderScreen} options={{ title: 'Kreator Planu Żywieniowego' }} />
+      <Stack.Screen name="MealPlanLibrary" component={MealPlanLibraryScreen} options={{ title: 'Biblioteka Planów Żywieniowych' }} />
+      <Stack.Screen name="ClientMealPlanView" component={ClientMealPlanViewScreen} options={{ title: 'Plan Żywieniowy' }} />
       {/*
       TODO: Add screens for the training plan module here later
       */}

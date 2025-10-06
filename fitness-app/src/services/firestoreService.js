@@ -78,11 +78,18 @@ export const createWorkoutPlan = async (planData) => {
   });
 };
 
-export const getActiveClientPlanAssignment = async (clientId) => {
+/**
+ * Finds the active plan assigned to a client for a specific type.
+ * @param {string} clientId - The client's UID.
+ * @param {string} type - The type of plan ('workout' or 'nutrition').
+ * @returns {object|null} The assignment document or null if not found.
+ */
+export const getActiveClientPlanAssignment = async (clientId, type) => {
     const q = query(
         collection(db, 'assignedPlans'),
         where('clientId', '==', clientId),
-        where('isActive', '==', true)
+        where('isActive', '==', true),
+        where('type', '==', type)
     );
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
@@ -98,11 +105,6 @@ export const getPlanDetails = async (planId) => {
     return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
 };
 
-/**
- * Retrieves all training plans created by a specific trainer.
- * @param {string} trainerId - The trainer's UID.
- * @returns {Array} A list of training plan objects.
- */
 export const getTrainerPlans = async (trainerId) => {
     const q = query(collection(db, 'trainingPlans'), where('trainerId', '==', trainerId));
     const querySnapshot = await getDocs(q);
@@ -114,19 +116,20 @@ export const getTrainerPlans = async (trainerId) => {
 };
 
 /**
- * Assigns a training plan to a client, deactivating any previously active plans.
+ * Assigns a plan to a client, deactivating any previously active plans of the same type.
  * @param {string} trainerId - The trainer's UID.
  * @param {string} clientId - The client's UID.
  * @param {string} planId - The ID of the plan to assign.
+ * @param {string} type - The type of plan ('workout' or 'nutrition').
  */
-export const assignPlanToClient = async (trainerId, clientId, planId) => {
+export const assignPlanToClient = async (trainerId, clientId, planId, type) => {
   const batch = writeBatch(db);
 
-  // 1. Find and deactivate any currently active plans for this client
   const activePlansQuery = query(
     collection(db, 'assignedPlans'),
     where('clientId', '==', clientId),
-    where('isActive', '==', true)
+    where('isActive', '==', true),
+    where('type', '==', type)
   );
   const activePlansSnapshot = await getDocs(activePlansQuery);
   activePlansSnapshot.forEach((document) => {
@@ -134,20 +137,44 @@ export const assignPlanToClient = async (trainerId, clientId, planId) => {
     batch.update(docRef, { isActive: false });
   });
 
-  // 2. Create the new active plan assignment
   const newAssignmentRef = doc(collection(db, 'assignedPlans'));
   batch.set(newAssignmentRef, {
     trainerId,
     clientId,
     planId,
+    type,
     isActive: true,
     startDate: new Date(),
   });
 
-  // 3. Commit the batch
   await batch.commit();
 };
 
+// --- Meal Plan Management ---
+
+export const createMealPlan = async (planData) => {
+  const plansCollection = collection(db, 'mealPlans');
+  return await addDoc(plansCollection, {
+    ...planData,
+    createdAt: new Date(),
+  });
+};
+
+export const getTrainerMealPlans = async (trainerId) => {
+    const q = query(collection(db, 'mealPlans'), where('trainerId', '==', trainerId));
+    const querySnapshot = await getDocs(q);
+    const plans = [];
+    querySnapshot.forEach((doc) => {
+        plans.push({ id: doc.id, ...doc.data() });
+    });
+    return plans;
+};
+
+export const getMealPlanDetails = async (planId) => {
+    const planRef = doc(db, 'mealPlans', planId);
+    const docSnap = await getDoc(planRef);
+    return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
+};
 
 // --- Measurement Management ---
 

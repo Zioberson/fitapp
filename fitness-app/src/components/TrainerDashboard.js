@@ -62,10 +62,19 @@ const TrainerDashboard = ({ user }) => {
       )}
 
       <View style={styles.buttonContainer}>
-        <Button
-          title="Zarządzaj Planami Treningowymi"
-          onPress={() => navigation.navigate('PlanLibrary')}
-        />
+        <View style={styles.buttonWrapper}>
+            <Button
+              title="Plany Treningowe"
+              onPress={() => navigation.navigate('PlanLibrary')}
+            />
+        </View>
+        <View style={styles.buttonWrapper}>
+            <Button
+              title="Plany Żywieniowe"
+              onPress={() => navigation.navigate('MealPlanLibrary')}
+              color="#3B82F6"
+            />
+        </View>
       </View>
     </View>
   );
@@ -125,6 +134,12 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 'auto', // Pushes the button to the bottom
     paddingTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  buttonWrapper: {
+    flex: 1,
+    marginHorizontal: 5,
   }
 });
 
