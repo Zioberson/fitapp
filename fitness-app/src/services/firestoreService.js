@@ -1,5 +1,6 @@
-import { db } from '../firebaseConfig';
-import { collection, doc, setDoc, getDoc, addDoc, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { db, storage } from '../firebaseConfig'; // Import storage
+import { collection, doc, setDoc, getDoc, addDoc, query, where, getDocs, writeBatch, orderBy, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // --- User Management ---
 
@@ -54,6 +55,16 @@ export const getTrainerClients = async (trainerId) => {
     clients.push({ id: doc.id, ...doc.data() });
   });
   return clients;
+};
+
+/**
+ * Updates a user's profile data in Firestore.
+ * @param {string} uid - The user's UID.
+ * @param {object} data - The data to update (e.g., { height: 180 }).
+ */
+export const updateUserProfile = async (uid, data) => {
+  const userRef = doc(db, 'users', uid);
+  await updateDoc(userRef, data);
 };
 
 // --- Training Plan Management ---
@@ -148,4 +159,40 @@ export const addMeasurement = async (clientId, measurementData) => {
     ...measurementData,
     date: new Date(),
   });
+};
+
+/**
+ * Retrieves all measurements for a specific client, ordered by date.
+ * @param {string} clientId - The client's UID.
+ * @returns {Array} A list of measurement objects.
+ */
+export const getClientMeasurements = async (clientId) => {
+    const q = query(
+        collection(db, 'measurements'),
+        where('clientId', '==', clientId),
+        orderBy('date', 'desc') // Get the newest first
+    );
+    const querySnapshot = await getDocs(q);
+    const measurements = [];
+    querySnapshot.forEach((doc) => {
+        measurements.push({ id: doc.id, ...doc.data() });
+    });
+    return measurements;
+};
+
+/**
+ * Uploads an image to Firebase Storage and returns its URL.
+ * @param {string} uri - The local URI of the image file.
+ * @param {string} userId - The user's UID to create a unique path.
+ * @returns {string} The public download URL of the uploaded image.
+ */
+export const uploadImageAndGetURL = async (uri, userId) => {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    const fileRef = ref(storage, `progress_photos/${userId}/${new Date().toISOString()}`);
+
+    await uploadBytes(fileRef, blob);
+    const downloadURL = await getDownloadURL(fileRef);
+
+    return downloadURL;
 };

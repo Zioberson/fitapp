@@ -7,6 +7,9 @@ import PlanLibraryScreen from '../screens/PlanLibraryScreen';
 import PlanBuilderScreen from '../screens/PlanBuilderScreen';
 import ClientProfileScreen from '../screens/ClientProfileScreen';
 import FullPlanViewScreen from '../screens/FullPlanViewScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+import AddMeasurementScreen from '../screens/AddMeasurementScreen';
+import ProgressHubScreen from '../screens/ProgressHubScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +26,9 @@ const AppStack = () => {
       <Stack.Screen name="PlanBuilder" component={PlanBuilderScreen} options={{ title: 'Kreator Planu' }} />
       <Stack.Screen name="ClientProfile" component={ClientProfileScreen} options={{ title: 'Profil Podopiecznego' }} />
       <Stack.Screen name="FullPlanView" component={FullPlanViewScreen} options={{ title: 'Szczegóły Planu' }} />
+      <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Ustawienia' }} />
+      <Stack.Screen name="AddMeasurement" component={AddMeasurementScreen} options={{ title: 'Dodaj Pomiar' }} />
+      <Stack.Screen name="ProgressHub" component={ProgressHubScreen} options={{ title: 'Centrum Postępów' }} />
       {/*
       TODO: Add screens for the training plan module here later
       */}

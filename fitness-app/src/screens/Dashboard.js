@@ -1,11 +1,19 @@
 import React from 'react';
-import { View, Button, StyleSheet, SafeAreaView } from 'react-native';
+import { View, StyleSheet, SafeAreaView, TouchableOpacity, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import TrainerDashboard from '../components/TrainerDashboard';
 import ClientDashboard from '../components/ClientDashboard';
 
-const Dashboard = ({ user, onLogout }) => {
+const Dashboard = ({ user }) => {
+  const navigation = useNavigation();
+
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.settingsButton}>
+          <Text style={styles.settingsButtonText}>⚙️</Text>
+        </TouchableOpacity>
+      </View>
       <View style={styles.container}>
         {/* Render the correct dashboard based on user role */}
         {user.role === 'trainer' ? (
@@ -13,10 +21,6 @@ const Dashboard = ({ user, onLogout }) => {
         ) : (
           <ClientDashboard user={user} />
         )}
-      </View>
-      {/* Logout button is always visible at the bottom */}
-      <View style={styles.logoutContainer}>
-        <Button title="Wyloguj" onPress={onLogout} color="#F59E0B" />
       </View>
     </SafeAreaView>
   );
@@ -27,13 +31,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  header: {
+    paddingHorizontal: 15,
+    paddingTop: 5,
+    paddingBottom: 10,
+    alignItems: 'flex-end',
+    backgroundColor: '#fff',
+  },
+  settingsButton: {
+    padding: 5,
+  },
+  settingsButtonText: {
+    fontSize: 28,
+  },
   container: {
     flex: 1,
-  },
-  logoutContainer: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
   },
 });
 
