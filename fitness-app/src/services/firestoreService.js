@@ -1,5 +1,5 @@
 import { db, storage } from '../firebaseConfig'; // Import storage
-import { collection, doc, setDoc, getDoc, addDoc, query, where, getDocs, writeBatch, orderBy, updateDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, addDoc, query, where, getDocs, writeBatch, orderBy, updateDoc, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // --- User Management ---
@@ -222,4 +222,96 @@ export const uploadImageAndGetURL = async (uri, userId) => {
     const downloadURL = await getDownloadURL(fileRef);
 
     return downloadURL;
+};
+
+// --- Comments & Notifications ---
+
+/**
+ * Adds a new comment to a target item.
+ * @param {string} authorId - The UID of the comment author.
+ * @param {string} targetId - The ID of the item being commented on (e.g., measurement ID).
+ * @param {string} targetType - The type of the item ('measurement', 'workout').
+ * @param {string} text - The content of the comment.
+ */
+export const addComment = async (authorId, targetId, targetType, text) => {
+  const commentsCollection = collection(db, 'comments');
+  await addDoc(commentsCollection, {
+    authorId,
+    targetId,
+    targetType,
+    text,
+    createdAt: new Date(),
+  });
+};
+
+/**
+ * Listens for real-time updates to comments for a specific target.
+ * @param {string} targetId - The ID of the item to get comments for.
+ * @param {function} callback - The function to call with the comments array.
+ * @returns {function} An unsubscribe function to stop listening.
+ */
+export const getCommentsForTarget = (targetId, callback) => {
+  const q = query(
+    collection(db, 'comments'),
+    where('targetId', '==', targetId),
+    orderBy('createdAt', 'asc')
+  );
+
+  return onSnapshot(q, (querySnapshot) => {
+    const comments = [];
+    querySnapshot.forEach((doc) => {
+      comments.push({ id: doc.id, ...doc.data() });
+    });
+    callback(comments);
+  });
+};
+
+/**
+ * Creates a notification for a user.
+ * @param {string} userId - The UID of the user to notify.
+ * @param {string} type - The type of notification (e.g., 'new_comment').
+ * @param {string} message - The notification message.
+ * @param {string} targetId - The ID of the related item.
+ */
+export const createNotification = async (userId, type, message, targetId) => {
+    const notificationsCollection = collection(db, 'notifications');
+    await addDoc(notificationsCollection, {
+        userId,
+        type,
+        message,
+        targetId,
+        read: false,
+        createdAt: new Date(),
+    });
+};
+
+/**
+ * Listens for real-time updates to a user's notifications.
+ * @param {string} userId - The UID of the user.
+ * @param {function} callback - The function to call with the notifications array.
+ * @returns {function} An unsubscribe function.
+ */
+export const getUserNotifications = (userId, callback) => {
+    const q = query(
+        collection(db, 'notifications'),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc')
+    );
+
+    return onSnapshot(q, (querySnapshot) => {
+        const notifications = [];
+        querySnapshot.forEach((doc) => {
+            notifications.push({ id: doc.id, ...doc.data() });
+        });
+        callback(notifications);
+    });
+};
+
+/**
+ * Marks a specific notification as read.
+ * @param {string} notificationId - The ID of the notification to update.
+ */
+export const markNotificationAsRead = async (notificationId) => {
+    const notificationRef = doc(db, 'notifications', notificationId);
+    await updateDoc(notificationRef, { read: true });
 };

@@ -13,6 +13,7 @@ import ProgressHubScreen from '../screens/ProgressHubScreen';
 import MealPlanBuilderScreen from '../screens/MealPlanBuilderScreen';
 import MealPlanLibraryScreen from '../screens/MealPlanLibraryScreen';
 import ClientMealPlanViewScreen from '../screens/ClientMealPlanViewScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,6 +36,7 @@ const AppStack = () => {
       <Stack.Screen name="MealPlanBuilder" component={MealPlanBuilderScreen} options={{ title: 'Kreator Planu Żywieniowego' }} />
       <Stack.Screen name="MealPlanLibrary" component={MealPlanLibraryScreen} options={{ title: 'Biblioteka Planów Żywieniowych' }} />
       <Stack.Screen name="ClientMealPlanView" component={ClientMealPlanViewScreen} options={{ title: 'Plan Żywieniowy' }} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Powiadomienia' }} />
       {/*
       TODO: Add screens for the training plan module here later
       */}

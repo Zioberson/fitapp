@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { auth } from '../firebaseConfig';
 import { getClientMeasurements } from '../services/firestoreService';
 import ProgressChart from '../components/ProgressChart';
+import CommentsSection from '../components/CommentsSection';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -76,6 +77,14 @@ const ProgressHubScreen = () => {
       ) : (
         <Text style={styles.noDataText}>Brak zdjęć progresu. Dodaj swój pierwszy pomiar ze zdjęciem!</Text>
       )}
+
+      <View style={styles.commentsContainer}>
+        <CommentsSection
+            targetId={auth.currentUser.uid}
+            targetType="progress_hub"
+            targetOwnerId={auth.currentUser.uid}
+        />
+      </View>
     </ScrollView>
   );
 };
@@ -132,6 +141,11 @@ const styles = StyleSheet.create({
     color: 'gray',
     paddingHorizontal: 20,
   },
+  commentsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    marginTop: 20,
+  }
 });
 
 export default ProgressHubScreen;
