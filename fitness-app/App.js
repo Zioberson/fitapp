@@ -5,7 +5,6 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './src/firebaseConfig';
 import { getUserDocument } from './src/services/firestoreService';
 import AppNavigator from './src/navigation/AppNavigator';
-import { ErrorProvider } from './src/contexts/ErrorContext';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -35,11 +34,9 @@ export default function App() {
   }
 
   return (
-    <ErrorProvider>
-        <NavigationContainer>
-            <AppNavigator user={user} />
-        </NavigationContainer>
-    </ErrorProvider>
+    <NavigationContainer>
+      <AppNavigator user={user} />
+    </NavigationContainer>
   );
 }
 

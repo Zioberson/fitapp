@@ -1,27 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Button, StyleSheet, FlatList, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, Button, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import { getTrainerMealPlans, assignPlanToClient } from '../services/firestoreService';
 import { auth } from '../firebaseConfig';
-import SkeletonPlaceholder from '../components/SkeletonPlaceholder';
-import { useError } from '../contexts/ErrorContext';
-
-const PlanItemSkeleton = () => (
-    <View style={styles.planItem}>
-        <SkeletonPlaceholder>
-            <View style={{ width: 180, height: 20, borderRadius: 4 }} />
-        </SkeletonPlaceholder>
-        <View style={{ marginTop: 8 }} />
-        <SkeletonPlaceholder>
-            <View style={{ width: 250, height: 16, borderRadius: 4 }} />
-        </SkeletonPlaceholder>
-    </View>
-);
 
 const MealPlanLibraryScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { showError } = useError();
   const { assignToClient } = route.params || {}; // Check if we are in assignment mode
 
   const [plans, setPlans] = useState([]);
@@ -33,26 +18,25 @@ const MealPlanLibraryScreen = () => {
     }
   }, [navigation, assignToClient]);
 
-  const fetchPlans = useCallback(async () => {
-    try {
-      setLoading(true);
-      const currentUser = auth.currentUser;
-      if (!currentUser) throw new Error("Użytkownik nie jest zalogowany.");
-
-      const planList = await getTrainerMealPlans(currentUser.uid);
-      setPlans(planList);
-    } catch (error) {
-      showError("Nie udało się pobrać planów żywieniowych.", fetchPlans);
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [showError]);
-
   useFocusEffect(
     useCallback(() => {
+      const fetchPlans = async () => {
+        try {
+          setLoading(true);
+          const currentUser = auth.currentUser;
+          if (!currentUser) throw new Error("Użytkownik nie jest zalogowany.");
+
+          const planList = await getTrainerMealPlans(currentUser.uid);
+          setPlans(planList);
+        } catch (error) {
+          Alert.alert("Błąd", "Nie udało się pobrać planów żywieniowych.");
+          console.error(error);
+        } finally {
+          setLoading(false);
+        }
+      };
       fetchPlans();
-    }, [fetchPlans])
+    }, [])
   );
 
   const handlePlanSelect = async (plan) => {
@@ -64,7 +48,7 @@ const MealPlanLibraryScreen = () => {
         Alert.alert("Sukces!", `Plan "${plan.name}" został przypisany do ${assignToClient.email}.`);
         navigation.goBack();
       } catch (error) {
-        showError("Nie udało się przypisać planu.");
+        Alert.alert("Błąd", "Nie udało się przypisać planu.");
         console.error(error);
       }
     } else {
@@ -81,51 +65,26 @@ const MealPlanLibraryScreen = () => {
     </TouchableOpacity>
   );
 
-  const renderSkeleton = () => (
-    <View>
-        <PlanItemSkeleton />
-        <PlanItemSkeleton />
-        <PlanItemSkeleton />
-    </View>
-  );
-
-  const renderEmptyComponent = () => (
-    <View style={styles.emptyContainer}>
-        <Text style={styles.emptyTitle}>Brak planów żywieniowych</Text>
-        <Text style={styles.emptySubtitle}>
-            Stwórz swój pierwszy plan, aby zacząć zarządzać dietą swoich podopiecznych.
-        </Text>
-        {!assignToClient && (
-            <TouchableOpacity
-                style={styles.createButton}
-                onPress={() => navigation.navigate('MealPlanBuilder')}
-            >
-                <Text style={styles.createButtonText}>Stwórz Nowy Plan</Text>
-            </TouchableOpacity>
-        )}
-    </View>
-  );
-
   return (
     <View style={styles.container}>
-      {!assignToClient && !loading && plans.length > 0 && (
-        <View style={{ marginBottom: 20 }}>
-          <Button
-            title="Stwórz Nowy Plan Żywieniowy"
-            onPress={() => navigation.navigate('MealPlanBuilder')}
-            color="#22C55E"
-          />
-        </View>
-      )}
       {loading ? (
-        renderSkeleton()
+        <ActivityIndicator size="large" color="#22C55E" />
       ) : (
         <FlatList
           data={plans}
           keyExtractor={(item) => item.id}
           renderItem={renderPlanItem}
-          ListEmptyComponent={renderEmptyComponent}
-          contentContainerStyle={plans.length === 0 ? { flex: 1, justifyContent: 'center' } : {}}
+          ListEmptyComponent={<Text style={styles.emptyListText}>Nie masz jeszcze żadnych planów żywieniowych.</Text>}
+          ListHeaderComponent={
+            !assignToClient && (
+              <Button
+                title="Stwórz Nowy Plan Żywieniowy"
+                onPress={() => navigation.navigate('MealPlanBuilder')}
+                color="#22C55E"
+              />
+            )
+          }
+          ListHeaderComponentStyle={{ marginBottom: 20 }}
         />
       )}
     </View>
@@ -155,35 +114,12 @@ const styles = StyleSheet.create({
     color: 'gray',
     marginTop: 5,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+  emptyListText: {
+    textAlign: 'center',
+    marginTop: 50,
+    fontSize: 16,
+    color: 'gray',
   },
-  emptyTitle: {
-      fontSize: 22,
-      fontWeight: 'bold',
-      textAlign: 'center',
-      marginBottom: 10,
-  },
-  emptySubtitle: {
-      fontSize: 16,
-      color: 'gray',
-      textAlign: 'center',
-      marginBottom: 30,
-  },
-  createButton: {
-      backgroundColor: '#22C55E',
-      paddingVertical: 12,
-      paddingHorizontal: 30,
-      borderRadius: 25,
-  },
-  createButtonText: {
-      color: '#fff',
-      fontSize: 16,
-      fontWeight: 'bold',
-  }
 });
 
 export default MealPlanLibraryScreen;

@@ -1,49 +1,27 @@
 {
   "expo": {
-    "name": "FitTrack Pro",
-    "slug": "fittrack-pro",
+    "name": "fitness-app",
+    "slug": "fitness-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "description": "The ultimate fitness application for personal trainers and their clients. Track progress, manage training and meal plans, and communicate effectively.",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.fittrackpro",
-      "buildNumber": "1.0.0"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "package": "com.yourcompany.fittrackpro",
-      "versionCode": 1
+      }
     },
     "web": {
-      "favicon": "./assets/favicon.png",
-      "name": "FitTrack Pro"
-    },
-    "plugins": [
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Aplikacja potrzebuje dostępu do Twojej galerii, abyś mógł(a) przesyłać zdjęcia progresu."
-        }
-      ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "your-eas-project-id"
-      },
-      "firebase": {
-        "note": "Pamiętaj, aby skonfigurować zmienne środowiskowe Firebase w pliku .env przed zbudowaniem aplikacji produkcyjnej!"
-      }
+      "favicon": "./assets/favicon.png"
     }
   }
 }
