@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, ActivityIndicator, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { createWorkoutPlan } from '../services/firestoreService';
 import { auth } from '../firebaseConfig';
@@ -108,7 +108,13 @@ const PlanBuilderScreen = () => {
       </TouchableOpacity>
 
       <View style={styles.saveButtonContainer}>
-        <Button title={loading ? "Zapisywanie..." : "Zapisz Plan"} onPress={handleSavePlan} disabled={loading} color="#22C55E" />
+        <TouchableOpacity onPress={handleSavePlan} disabled={loading} style={styles.saveButton}>
+            {loading ? (
+                <ActivityIndicator color="#fff" />
+            ) : (
+                <Text style={styles.saveButtonText}>Zapisz Plan</Text>
+            )}
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -139,6 +145,19 @@ const styles = StyleSheet.create({
   addButton: { padding: 15, backgroundColor: '#e0e0e0', borderRadius: 8, alignItems: 'center', marginVertical: 10 },
   addButtonText: { fontSize: 16, fontWeight: 'bold' },
   saveButtonContainer: { marginTop: 20, marginBottom: 40 },
+  saveButton: {
+    backgroundColor: '#22C55E',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+  },
+  saveButtonText: {
+      color: '#fff',
+      fontWeight: 'bold',
+      fontSize: 16,
+  }
 });
 
 export default PlanBuilderScreen;
