@@ -1,12 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, FlatList, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, FlatList, Image, Dimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { auth } from '../firebaseConfig';
 import { getClientMeasurements } from '../services/firestoreService';
 import ProgressChart from '../components/ProgressChart';
 import CommentsSection from '../components/CommentsSection';
+import SkeletonPlaceholder from '../components/SkeletonPlaceholder';
 
 const screenWidth = Dimensions.get('window').width;
+
+const ChartSkeleton = () => (
+    <View style={styles.chartSection}>
+        <SkeletonPlaceholder>
+            <View style={{ height: 200, width: '100%', borderRadius: 8 }} />
+        </SkeletonPlaceholder>
+    </View>
+);
 
 const ProgressHubScreen = () => {
   const [measurements, setMeasurements] = useState([]);
@@ -43,48 +52,56 @@ const ProgressHubScreen = () => {
     .filter(m => m.photoUrl)
     .map(m => ({ id: m.id, url: m.photoUrl, date: new Date(m.date.seconds * 1000).toLocaleDateString('pl-PL') }));
 
-  if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#22C55E" />
-      </View>
-    );
+  const renderContent = () => {
+      if (loading) {
+          return (
+              <View style={styles.container}>
+                  <Text style={styles.header}>Twoje Postępy</Text>
+                  <ChartSkeleton />
+              </View>
+          )
+      }
+
+      return (
+          <>
+            <Text style={styles.header}>Twoje Postępy</Text>
+
+            <View style={styles.chartSection}>
+                <ProgressChart title="Zmiana Wagi (kg)" data={weightData} />
+            </View>
+
+            <Text style={styles.subHeader}>Galeria Zdjęć</Text>
+            {progressPhotos.length > 0 ? (
+                <FlatList
+                    horizontal
+                    data={progressPhotos}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                        <View style={styles.photoContainer}>
+                            <Image source={{ uri: item.url }} style={styles.photo} />
+                            <Text style={styles.photoDate}>{item.date}</Text>
+                        </View>
+                    )}
+                    showsHorizontalScrollIndicator={false}
+                />
+            ) : (
+                <Text style={styles.noDataText}>Brak zdjęć progresu. Dodaj swój pierwszy pomiar ze zdjęciem!</Text>
+            )}
+
+            <View style={styles.commentsContainer}>
+                <CommentsSection
+                    targetId={auth.currentUser.uid}
+                    targetType="progress_hub"
+                    targetOwnerId={auth.currentUser.uid}
+                />
+            </View>
+        </>
+      )
   }
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.header}>Twoje Postępy</Text>
-
-      <View style={styles.chartSection}>
-        <ProgressChart title="Zmiana Wagi (kg)" data={weightData} />
-        {/* TODO: Add more charts for other dimensions */}
-      </View>
-
-      <Text style={styles.subHeader}>Galeria Zdjęć</Text>
-      {progressPhotos.length > 0 ? (
-        <FlatList
-          horizontal
-          data={progressPhotos}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.photoContainer}>
-              <Image source={{ uri: item.url }} style={styles.photo} />
-              <Text style={styles.photoDate}>{item.date}</Text>
-            </View>
-          )}
-          showsHorizontalScrollIndicator={false}
-        />
-      ) : (
-        <Text style={styles.noDataText}>Brak zdjęć progresu. Dodaj swój pierwszy pomiar ze zdjęciem!</Text>
-      )}
-
-      <View style={styles.commentsContainer}>
-        <CommentsSection
-            targetId={auth.currentUser.uid}
-            targetType="progress_hub"
-            targetOwnerId={auth.currentUser.uid}
-        />
-      </View>
+        {renderContent()}
     </ScrollView>
   );
 };

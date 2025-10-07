@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { getMealPlanDetails } from '../services/firestoreService';
+import SkeletonPlaceholder from '../components/SkeletonPlaceholder';
+import { useError } from '../contexts/ErrorContext';
 
 // Reusable component for nutrition details
 const NutritionDetail = ({ nutrition, title }) => (
@@ -12,8 +15,45 @@ const NutritionDetail = ({ nutrition, title }) => (
   </View>
 );
 
+const MealPlanSkeleton = () => (
+    <View style={styles.container}>
+        <SkeletonPlaceholder><View style={{ height: 30, width: '70%', alignSelf: 'center', marginBottom: 10 }} /></SkeletonPlaceholder>
+        <SkeletonPlaceholder><View style={{ height: 20, width: '90%', alignSelf: 'center', marginBottom: 20 }} /></SkeletonPlaceholder>
+        <SkeletonPlaceholder><View style={{ height: 100, width: '100%', borderRadius: 8, marginBottom: 20 }} /></SkeletonPlaceholder>
+        <SkeletonPlaceholder><View style={{ height: 200, width: '100%', borderRadius: 8, marginBottom: 15 }} /></SkeletonPlaceholder>
+        <SkeletonPlaceholder><View style={{ height: 200, width: '100%', borderRadius: 8, marginBottom: 15 }} /></SkeletonPlaceholder>
+    </View>
+);
+
 const ClientMealPlanViewScreen = ({ route }) => {
-  const { mealPlan } = route.params;
+  const { mealPlanId } = route.params;
+  const [mealPlan, setMealPlan] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { showError } = useError();
+
+  const fetchPlan = useCallback(async () => {
+      try {
+          setLoading(true);
+          const plan = await getMealPlanDetails(mealPlanId);
+          if (plan) {
+              setMealPlan(plan);
+          } else {
+              showError("Nie znaleziono planu żywieniowego.");
+          }
+      } catch (error) {
+          showError("Błąd podczas ładowania planu.", fetchPlan);
+      } finally {
+          setLoading(false);
+      }
+  }, [mealPlanId, showError]);
+
+  useEffect(() => {
+    fetchPlan();
+  }, [fetchPlan]);
+
+  if (loading) {
+    return <MealPlanSkeleton />;
+  }
 
   if (!mealPlan) {
     return (
@@ -47,9 +87,6 @@ const ClientMealPlanViewScreen = ({ route }) => {
               <Text style={styles.recipeText}>{meal.recipe}</Text>
             </>
           )}
-
-          {/* Note: Per-meal nutrition would require recalculation here or storing it within the meal object itself */}
-          {/* For now, we're focusing on the total daily nutrition as per the current structure. */}
         </View>
       ))}
     </ScrollView>

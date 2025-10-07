@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { auth } from '../firebaseConfig';
 import { getUserNotifications, markNotificationAsRead } from '../services/firestoreService';
@@ -10,19 +10,30 @@ const NotificationsScreen = () => {
   const navigation = useNavigation();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
+  const fetchNotifications = useCallback(() => {
     const currentUser = auth.currentUser;
-    if (!currentUser) return;
+    if (!currentUser) return () => {};
 
     const unsubscribe = getUserNotifications(currentUser.uid, (fetchedNotifications) => {
       setNotifications(fetchedNotifications);
       setLoading(false);
+      setRefreshing(false);
     });
 
-    // Cleanup listener on unmount
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = fetchNotifications();
+    return () => unsubscribe();
+  }, [fetchNotifications]);
+
+  const onRefresh = useCallback(() => {
+      setRefreshing(true);
+      fetchNotifications();
+  }, [fetchNotifications]);
 
   const handleNotificationPress = async (notification) => {
     try {
@@ -63,6 +74,9 @@ const NotificationsScreen = () => {
       renderItem={renderNotification}
       keyExtractor={(item) => item.id}
       ListEmptyComponent={<Text style={styles.emptyText}>Nie masz żadnych nowych powiadomień.</Text>}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#22C55E"]} />
+      }
     />
   );
 };
