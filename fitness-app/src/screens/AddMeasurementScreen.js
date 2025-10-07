@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator, StyleSheet, ScrollView, Alert, Image, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, ScrollView, Alert, Image, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { auth } from '../firebaseConfig';
@@ -14,34 +14,6 @@ const AddMeasurementScreen = () => {
   const [thighs, setThighs] = useState('');
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-
-  const validateInput = () => {
-    const newErrors = {};
-    const numberRegex = /^[0-9]+(\.[0-9]{1,2})?$/;
-
-    if (!weight.trim()) {
-        newErrors.weight = "Waga jest wymagana.";
-    } else if (!numberRegex.test(weight) || parseFloat(weight) <= 0) {
-        newErrors.weight = "Wprowadź poprawną, dodatnią wartość wagi.";
-    }
-
-    if (chest && (!numberRegex.test(chest) || parseFloat(chest) <= 0)) {
-        newErrors.chest = "Wprowadź poprawną, dodatnią wartość.";
-    }
-    if (waist && (!numberRegex.test(waist) || parseFloat(waist) <= 0)) {
-        newErrors.waist = "Wprowadź poprawną, dodatnią wartość.";
-    }
-    if (biceps && (!numberRegex.test(biceps) || parseFloat(biceps) <= 0)) {
-        newErrors.biceps = "Wprowadź poprawną, dodatnią wartość.";
-    }
-    if (thighs && (!numberRegex.test(thighs) || parseFloat(thighs) <= 0)) {
-        newErrors.thighs = "Wprowadź poprawną, dodatnią wartość.";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -63,8 +35,9 @@ const AddMeasurementScreen = () => {
   };
 
   const handleSave = async () => {
-    if (!validateInput()) {
-        return;
+    if (!weight) {
+      Alert.alert("Błąd", "Waga jest wymaganym polem.");
+      return;
     }
 
     setLoading(true);
@@ -115,18 +88,13 @@ const AddMeasurementScreen = () => {
       <Text style={styles.header}>Dodaj Nowy Pomiar</Text>
 
       <Text style={styles.label}>Waga (kg)*</Text>
-      <TextInput style={[styles.input, errors.weight && styles.inputError]} placeholder="Waga" value={weight} onChangeText={setWeight} keyboardType="numeric" />
-      {errors.weight && <Text style={styles.errorText}>{errors.weight}</Text>}
+      <TextInput style={styles.input} placeholder="Waga" value={weight} onChangeText={setWeight} keyboardType="numeric" />
 
       <Text style={styles.label}>Obwody (cm)</Text>
-      <TextInput style={[styles.input, errors.chest && styles.inputError]} placeholder="Klatka piersiowa" value={chest} onChangeText={setChest} keyboardType="numeric" />
-      {errors.chest && <Text style={styles.errorText}>{errors.chest}</Text>}
-      <TextInput style={[styles.input, errors.waist && styles.inputError]} placeholder="Talia" value={waist} onChangeText={setWaist} keyboardType="numeric" />
-      {errors.waist && <Text style={styles.errorText}>{errors.waist}</Text>}
-      <TextInput style={[styles.input, errors.biceps && styles.inputError]} placeholder="Biceps" value={biceps} onChangeText={setBiceps} keyboardType="numeric" />
-      {errors.biceps && <Text style={styles.errorText}>{errors.biceps}</Text>}
-      <TextInput style={[styles.input, errors.thighs && styles.inputError]} placeholder="Udo" value={thighs} onChangeText={setThighs} keyboardType="numeric" />
-      {errors.thighs && <Text style={styles.errorText}>{errors.thighs}</Text>}
+      <TextInput style={styles.input} placeholder="Klatka piersiowa" value={chest} onChangeText={setChest} keyboardType="numeric" />
+      <TextInput style={styles.input} placeholder="Talia" value={waist} onChangeText={setWaist} keyboardType="numeric" />
+      <TextInput style={styles.input} placeholder="Biceps" value={biceps} onChangeText={setBiceps} keyboardType="numeric" />
+      <TextInput style={styles.input} placeholder="Udo" value={thighs} onChangeText={setThighs} keyboardType="numeric" />
 
       <Text style={styles.label}>Zdjęcie Progresu (opcjonalnie)</Text>
       <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
@@ -135,13 +103,7 @@ const AddMeasurementScreen = () => {
       {image && <Image source={{ uri: image }} style={styles.previewImage} />}
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={handleSave} disabled={loading} style={styles.saveButton}>
-            {loading ? (
-                <ActivityIndicator color="#fff" />
-            ) : (
-                <Text style={styles.saveButtonText}>Zapisz Pomiar</Text>
-            )}
-        </TouchableOpacity>
+        <Button title={loading ? "Zapisywanie..." : "Zapisz Pomiar"} onPress={handleSave} disabled={loading} color="#22C55E" />
       </View>
     </ScrollView>
   );
@@ -158,14 +120,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#eee',
     marginBottom: 7,
-  },
-  inputError: {
-    borderColor: '#ff4d4d',
-  },
-  errorText: {
-      color: '#ff4d4d',
-      marginBottom: 10,
-      marginLeft: 5,
   },
   imagePicker: {
     backgroundColor: '#3B82F6',
@@ -188,19 +142,6 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 30,
     marginBottom: 40,
-  },
-  saveButton: {
-    backgroundColor: '#22C55E',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 50,
-  },
-  saveButtonText: {
-      color: '#fff',
-      fontWeight: 'bold',
-      fontSize: 16,
   }
 });
 

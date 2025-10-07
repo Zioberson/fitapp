@@ -4,14 +4,12 @@ import { auth } from '../firebaseConfig';
 import { getCommentsForTarget, addComment, createNotification, getUserDocument } from '../services/firestoreService';
 import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import { useError } from '../contexts/ErrorContext';
 
 const CommentsSection = ({ targetId, targetType, targetOwnerId }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [userProfiles, setUserProfiles] = useState({});
-  const { showError } = useError();
 
   const currentUser = auth.currentUser;
 
@@ -41,7 +39,7 @@ const CommentsSection = ({ targetId, targetType, targetOwnerId }) => {
     if (!targetId) return;
     setLoading(true);
     const unsubscribe = getCommentsForTarget(targetId, (fetchedComments) => {
-      setComments(fetchedComments.filter(c => !c.pending));
+      setComments(fetchedComments);
       setLoading(false);
     });
     return () => unsubscribe();
@@ -49,18 +47,6 @@ const CommentsSection = ({ targetId, targetType, targetOwnerId }) => {
 
   const handleAddComment = async () => {
     if (newComment.trim() === '') return;
-
-    const tempId = `temp_${Date.now()}`;
-    const optimisticComment = {
-        id: tempId,
-        authorId: currentUser.uid,
-        text: newComment.trim(),
-        createdAt: new Date(),
-        pending: true,
-    };
-
-    setComments(prev => [optimisticComment, ...prev]);
-    setNewComment('');
 
     try {
       await addComment(currentUser.uid, targetId, targetType, newComment.trim());
@@ -79,18 +65,18 @@ const CommentsSection = ({ targetId, targetType, targetOwnerId }) => {
         await createNotification(recipientId, 'new_comment', message, targetId);
       }
 
+      setNewComment('');
     } catch (error) {
-      showError("Nie udało się dodać komentarza. Spróbuj ponownie.");
-      setComments(prev => prev.filter(c => c.id !== tempId));
+      Alert.alert("Błąd", "Nie udało się dodać komentarza.");
     }
   };
 
   const renderComment = ({ item }) => (
-    <View style={[styles.commentContainer, item.pending && styles.pendingComment]}>
+    <View style={styles.commentContainer}>
       <Text style={styles.commentAuthor}>{userProfiles[item.authorId] || '...'}</Text>
       <Text style={styles.commentText}>{item.text}</Text>
       <Text style={styles.commentDate}>
-        {item.createdAt ? formatDistanceToNow(item.createdAt.toDate ? item.createdAt.toDate() : item.createdAt, { addSuffix: true, locale: pl }) : ''}
+        {item.createdAt ? formatDistanceToNow(item.createdAt.toDate(), { addSuffix: true, locale: pl }) : ''}
       </Text>
     </View>
   );
@@ -123,7 +109,6 @@ const styles = StyleSheet.create({
   container: { marginTop: 20, padding: 10, backgroundColor: '#f9f9f9', borderRadius: 8 },
   header: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
   commentContainer: { paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#eee' },
-  pendingComment: { opacity: 0.5 },
   commentAuthor: { fontWeight: 'bold', color: '#3B82F6' },
   commentText: { fontSize: 15, marginVertical: 4 },
   commentDate: { fontSize: 12, color: 'gray', textAlign: 'right' },

@@ -64,7 +64,7 @@ const ClientDashboard = ({ user }) => {
                 <Text>T: {mealPlan.totalNutrition.fat.toFixed(0)}g</Text>
                 <Text>W: {mealPlan.totalNutrition.carbs.toFixed(0)}g</Text>
             </View>
-            <View style={styles.buttonWrapper}><Button title="Zobacz całą dietę" onPress={() => navigation.navigate('ClientMealPlanView', { mealPlanId: mealPlan.id })} color="#3B82F6" /></View>
+            <View style={styles.buttonWrapper}><Button title="Zobacz całą dietę" onPress={() => navigation.navigate('ClientMealPlanView', { mealPlan })} color="#3B82F6" /></View>
         </>
       );
   };
